@@ -15,6 +15,7 @@
 		0302CB6C1F14493F00B0B62D /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0302CB6B1F14493F00B0B62D /* MapKit.framework */; };
 		0302CB6E1F1450EA00B0B62D /* CoreData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0302CB6D1F1450EA00B0B62D /* CoreData.framework */; };
 		0302CB711F14512A00B0B62D /* tracker.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 0302CB6F1F14512A00B0B62D /* tracker.xcdatamodeld */; };
+		0302CB731F145F5300B0B62D /* eita.gpx in Resources */ = {isa = PBXBuildFile; fileRef = 0302CB721F145F5300B0B62D /* eita.gpx */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +29,7 @@
 		0302CB6B1F14493F00B0B62D /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
 		0302CB6D1F1450EA00B0B62D /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
 		0302CB701F14512A00B0B62D /* tracker.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = tracker.xcdatamodel; sourceTree = "<group>"; };
+		0302CB721F145F5300B0B62D /* eita.gpx */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = eita.gpx; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -46,6 +48,7 @@
 		0302CB4C1F14492A00B0B62D = {
 			isa = PBXGroup;
 			children = (
+				0302CB721F145F5300B0B62D /* eita.gpx */,
 				0302CB571F14492A00B0B62D /* tracker */,
 				0302CB561F14492A00B0B62D /* Products */,
 				0302CB6A1F14493F00B0B62D /* Frameworks */,
@@ -151,6 +154,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0302CB731F145F5300B0B62D /* eita.gpx in Resources */,
 				0302CB631F14492A00B0B62D /* LaunchScreen.storyboard in Resources */,
 				0302CB601F14492A00B0B62D /* Assets.xcassets in Resources */,
 				0302CB5E1F14492A00B0B62D /* Main.storyboard in Resources */,
