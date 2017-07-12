@@ -13,22 +13,39 @@ import CoreData
 
 class ViewController: UIViewController, CLLocationManagerDelegate {
     @IBOutlet weak var mapView: MKMapView!
+    
  
     @IBOutlet weak var swithEnvio: UISwitch!
     
     let locationManager = CLLocationManager()
    
+    @IBOutlet weak var speedKmhLabel: UILabel!
+    @IBOutlet weak var altitudeLabel: UILabel!
+    @IBOutlet weak var speedLabel: UILabel!
+    @IBOutlet weak var segmentedControl: UISegmentedControl!
     @IBOutlet weak var enviadosLabel: UILabel!
     @IBOutlet weak var lngLabel: UILabel!
     @IBOutlet weak var latLabel: UILabel!
     var enviados = 0
     var gravados = 0
     
+    @IBAction func onChangeSegmentedControl(_ sender: UISegmentedControl) {
+        
+        let accuracyValues = [
+            10,
+            1000,
+            5000]
+        
+        locationManager.distanceFilter = CLLocationDistance(accuracyValues[sender.selectedSegmentIndex]);
+        
+    }
     override func viewDidLoad() {
         
         
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
+        
+        mapView.mapType = MKMapType.satelliteFlyover
         
         // Ask for Authorisation from the User.
         self.locationManager.requestAlwaysAuthorization()
@@ -41,11 +58,13 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             //locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
             locationManager.desiredAccuracy = kCLLocationAccuracyBest
             locationManager.distanceFilter = 10
+            locationManager.activityType = CLActivityType.fitness
+            locationManager.allowsBackgroundLocationUpdates = true
             locationManager.startUpdatingLocation()
         }
         
         swithEnvio.addTarget(self, action: #selector(ViewController.sampleSwitchValueChanged(sender:)), for: UIControlEvents.valueChanged)
-
+        
     }
     
     func sampleSwitchValueChanged(sender: UISwitch!)
@@ -53,7 +72,6 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         if sender.isOn {
             print("switch on")
             sendPositions()
-            
         } else {
             
         }
@@ -63,8 +81,15 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         let locValue:CLLocationCoordinate2D = manager.location!.coordinate
         print("locations = \(locValue.latitude) \(locValue.longitude)")
-        lngLabel.text = "\(locValue.longitude)"
-        latLabel.text = "\(locValue.latitude)"
+        lngLabel.text = "\(NSString(format: "%.6f",locValue.longitude))"
+        latLabel.text = "\(NSString(format: "%.6f",locValue.latitude))"
+        altitudeLabel.text = "\(NSString(format: "%.2f", manager.location!.altitude))"
+        speedLabel.text = "\(NSString(format: "%.2f", manager.location!.speed)) m/s"
+        speedKmhLabel.text = "\(NSString(format: "%.2f", manager.location!.speed * 3.6)) km/h"
+        print("Altitude: \(manager.location!.altitude) m")
+        print("Speed: \(manager.location!.speed)")
+        print("Timestamp: \(manager.location!.timestamp)")
+
         
         // Coloca o pin no mapa..
         mapView.removeAnnotations(mapView.annotations)
@@ -72,10 +97,11 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         annotation.title = "eh nois!"
         annotation.coordinate = CLLocationCoordinate2D(latitude: locValue.latitude, longitude: locValue.longitude)
         mapView.addAnnotation(annotation)
+        mapView.centerCoordinate = annotation.coordinate
         
         
         // Salva no Coredata
-        savePosition(latitude: locValue.latitude, longitude: locValue.longitude)
+        savePosition(latitude: locValue.latitude, longitude: locValue.longitude, timestamp: manager.location!.timestamp)
         
         gravados+=1
         enviadosLabel.text = "\(enviados) / \(gravados)"
@@ -87,7 +113,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         return appDelegate.persistentContainer.viewContext
     }
     
-    func savePosition(latitude: Double, longitude: Double) {
+    func savePosition(latitude: Double, longitude: Double, timestamp: Date) {
         let context = getContext()
         
         //retrieve the entity that we just created
@@ -98,6 +124,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         //set the entity values
         transc.setValue(latitude, forKey: "latitude")
         transc.setValue(longitude, forKey: "longitude")
+        transc.setValue(timestamp, forKey: "timestamp")
         transc.setValue(false, forKey: "sent")
         
         //save the object
@@ -130,12 +157,17 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                 gravados+=1
                 if trans.value(forKey: "sent") as! Bool == false {
                     
+                
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateFormat = "yyyy-MM-dd hh:mm:ss"
+                    let todaysDate = dateFormatter.string(from: trans.value(forKey: "timestamp") as! Date)
+                    
                     print ("Sending \(trans.value(forKey: "latitude") ?? ""), \(trans.value(forKey: "longitude") ?? "")")
                     var success = false
                     
                     var request = URLRequest(url: URL(string: "http://tracker.siriusgomes.com.br/index.php")!)
                     request.httpMethod = "POST"
-                    let postString = "lat=\(trans.value(forKey: "latitude") ?? "")&lng=\(trans.value(forKey: "longitude") ?? "")"
+                    let postString = "lat=\(trans.value(forKey: "latitude") ?? "")&lng=\(trans.value(forKey: "longitude") ?? "")&date=\(todaysDate)"
                     request.httpBody = postString.data(using: .utf8)
                     let task = URLSession.shared.dataTask(with: request) { data, response, error in
                         guard let data = data, error == nil else {                                                 // check for fundamental networking error
@@ -160,14 +192,15 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                             do {
                                 try self.getContext().save()
                                 print("Updated!")
+                                self.enviadosLabel.text = "\(self.enviados) / \(self.gravados)"
+                                self.enviados += 1
                             } catch let error as NSError  {
                                 print("Could not save \(error), \(error.userInfo)")
                             } catch {
                             }
                         }
                         
-                        //self.enviadosLabel.text = "\(self.enviados)"
-                        //self.enviados += 1
+                       
                     }
                     task.resume()
                 
