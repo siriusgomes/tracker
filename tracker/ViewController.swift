@@ -15,8 +15,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     @IBOutlet weak var mapView: MKMapView!
     
  
-    @IBOutlet weak var swithEnvio: UISwitch!
+    @IBOutlet weak var switchOnline: UISwitch!
 
+    @IBOutlet weak var switchRecord: UISwitch!
     let locationManager = CLLocationManager()
     
     @IBOutlet weak var distanceTracked: UILabel!
@@ -32,10 +33,22 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     @IBAction func onButtonDeleteSentClick(_ sender: UIButton) {
         deleteSentPositions()
     }
-    @IBAction func onChangeSegmentedControl(_ sender: UISegmentedControl) {
+    
+    @IBAction func onChangeDesiredAcuracy(_ sender: UISegmentedControl) {
+        let accuracyValues = [
+            kCLLocationAccuracyBest,
+            kCLLocationAccuracyNearestTenMeters,
+            kCLLocationAccuracyHundredMeters,
+            kCLLocationAccuracyKilometer,
+            kCLLocationAccuracyBestForNavigation
+        ]
+        
+        locationManager.desiredAccuracy = accuracyValues[sender.selectedSegmentIndex]
+    }
+    
+    @IBAction func onChangeDistanceFilter(_ sender: UISegmentedControl) {
         
         let accuracyValues = [
-            0,
             10,
             100,
             1000,
@@ -71,43 +84,52 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             locationManager.startUpdatingLocation()
         }
         
-        swithEnvio.addTarget(self, action: #selector(ViewController.sampleSwitchValueChanged(sender:)), for: UIControlEvents.valueChanged)
+       
         
     }
-    
-    func sampleSwitchValueChanged(sender: UISwitch!)
-    {
+    @IBAction func switchOnlineChange(_ sender: UISwitch) {
         if sender.isOn {
-            print("switch on")
+            print("switch online on")
+            switchRecord.setOn(true, animated: true)
             sendPositions()
             setCounters()
         } else {
-             setCounters()
+            setCounters()
+            print("switch online off")
         }
     }
 
+    @IBAction func switchRecordChange(_ sender: UISwitch) {
+        if sender.isOn {
+            print("switch record on")
+        } else {
+            setCounters()
+            print("switch record off")
+        }
+    }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         let locValue:CLLocationCoordinate2D = manager.location!.coordinate
         print("Location = \(locValue.latitude),\(locValue.longitude) - Altitude: \(manager.location!.altitude)m - Speed: \(manager.location!.speed)m/s - Timestamp: \(manager.location!.timestamp)")
        
-        latLabel.text = "Lat/Lng: \(NSString(format: "%.6f",locValue.latitude)),\(NSString(format: "%.6f",locValue.longitude))"
+        latLabel.text = "Latitude/Longitude: \(NSString(format: "%.6f",locValue.latitude)),\(NSString(format: "%.6f",locValue.longitude))"
         altitudeLabel.text = "Altitude: \(NSString(format: "%.2f", manager.location!.altitude))m"
         speedLabel.text = "Speed: \(NSString(format: "%.2f", manager.location!.speed * 3.6))km/h"
         
         // Coloca o pin no mapa..
         mapView.removeAnnotations(mapView.annotations)
         let annotation = MKPointAnnotation()
-        annotation.title = "eh nois!"
+        annotation.title = "Current location"
         annotation.coordinate = CLLocationCoordinate2D(latitude: locValue.latitude, longitude: locValue.longitude)
         mapView.addAnnotation(annotation)
-        mapView.centerCoordinate = annotation.coordinate
-        
+        mapView.setCenter(annotation.coordinate, animated: true)
         
         // Salva no Coredata
-        savePosition(latitude: locValue.latitude, longitude: locValue.longitude, timestamp: manager.location!.timestamp)
+        if switchRecord.isOn {
+            savePosition(latitude: locValue.latitude, longitude: locValue.longitude, timestamp: manager.location!.timestamp)
+        }
         
-        if swithEnvio.isOn {
+        if switchOnline.isOn {
             sendPositions()
         }
         
@@ -161,7 +183,6 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             
             for trans in searchResults as [NSManagedObject] {
                 locActual = CLLocation.init(latitude: trans.value(forKey: "latitude") as! Double, longitude: trans.value(forKey: "longitude") as! Double)
-               
                 if (gravados > 0) {
                     distance.add(locActual.distance(from: locPrevious))
                 }
@@ -175,8 +196,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         catch {
             print("Error with request: \(error)")
         }
-        self.enviadosLabel.text = "Sent/Rec: \(self.enviados)/\(self.gravados)"
-        self.distanceTracked.text = "Distance tracked: \(NSString(format: "%.2f", (distance / 1000)))km"
+        self.enviadosLabel.text = "\(self.gravados)/\(self.enviados)"
+        self.distanceTracked.text = "Traveled: \(NSString(format: "%.2f", (distance / 1000)))km"
     }
     
     func deleteSentPositions() {
@@ -228,7 +249,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             for trans in searchResults as [NSManagedObject] {
                 
                 let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "yyyy-MM-dd hh:mm:ss ZZZ"
+                dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss ZZZ"
                 dateFormatter.timeZone = NSTimeZone(abbreviation: "UTC")! as TimeZone
                 let todaysDate = dateFormatter.string(from: trans.value(forKey: "timestamp") as! Date)
                 
