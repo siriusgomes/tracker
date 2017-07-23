@@ -13,13 +13,8 @@ import CoreData
 
 class ViewController: UIViewController, CLLocationManagerDelegate {
     @IBOutlet weak var mapView: MKMapView!
-    
- 
     @IBOutlet weak var switchOnline: UISwitch!
-
     @IBOutlet weak var switchRecord: UISwitch!
-    let locationManager = CLLocationManager()
-    
     @IBOutlet weak var distanceTracked: UILabel!
     @IBOutlet weak var buttonDeleteSent: UIButton!
     @IBOutlet weak var altitudeLabel: UILabel!
@@ -27,8 +22,13 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     @IBOutlet weak var segmentedControl: UISegmentedControl!
     @IBOutlet weak var enviadosLabel: UILabel!
     @IBOutlet weak var latLabel: UILabel!
+    
+    let locationManager = CLLocationManager()
     var enviados = 0
     var gravados = 0
+    
+    let appDelegate = UIApplication.shared.delegate as! AppDelegate
+
     
     @IBAction func onButtonDeleteSentClick(_ sender: UIButton) {
         deleteSentPositions()
@@ -40,6 +40,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             kCLLocationAccuracyNearestTenMeters,
             kCLLocationAccuracyHundredMeters,
             kCLLocationAccuracyKilometer,
+            kCLLocationAccuracyThreeKilometers,
             kCLLocationAccuracyBestForNavigation
         ]
         
@@ -49,20 +50,22 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     @IBAction func onChangeDistanceFilter(_ sender: UISegmentedControl) {
         
         let accuracyValues = [
+            0,
             10,
+            25,
             100,
             1000,
-            5000,
-            10000]
+            5000]
         
         locationManager.distanceFilter = CLLocationDistance(accuracyValues[sender.selectedSegmentIndex]);
         
     }
     override func viewDidLoad() {
-        
-        
+
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
+        
+        appDelegate.enableUIChanges = true
         
         setCounters()
         
@@ -83,17 +86,17 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             locationManager.allowsBackgroundLocationUpdates = true
             locationManager.startUpdatingLocation()
         }
-        
-       
-        
     }
     @IBAction func switchOnlineChange(_ sender: UISwitch) {
         if sender.isOn {
             print("switch online on")
             switchRecord.setOn(true, animated: true)
+            appDelegate.enableOnline = true
+            appDelegate.enableRecord = true
             sendPositions()
             setCounters()
         } else {
+            appDelegate.enableOnline = false
             setCounters()
             print("switch online off")
         }
@@ -102,7 +105,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     @IBAction func switchRecordChange(_ sender: UISwitch) {
         if sender.isOn {
             print("switch record on")
+            appDelegate.enableRecord = true
         } else {
+            appDelegate.enableRecord = false
             setCounters()
             print("switch record off")
         }
@@ -117,19 +122,21 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         speedLabel.text = "Speed: \(NSString(format: "%.2f", manager.location!.speed * 3.6))km/h"
         
         // Coloca o pin no mapa..
-        mapView.removeAnnotations(mapView.annotations)
-        let annotation = MKPointAnnotation()
-        annotation.title = "Current location"
-        annotation.coordinate = CLLocationCoordinate2D(latitude: locValue.latitude, longitude: locValue.longitude)
-        mapView.addAnnotation(annotation)
-        mapView.setCenter(annotation.coordinate, animated: true)
-        
-        // Salva no Coredata
-        if switchRecord.isOn {
-            savePosition(latitude: locValue.latitude, longitude: locValue.longitude, timestamp: manager.location!.timestamp)
+        if (appDelegate.enableUIChanges) {
+            mapView.removeAnnotations(mapView.annotations)
+            let annotation = MKPointAnnotation()
+            annotation.title = "Current location"
+            annotation.coordinate = CLLocationCoordinate2D(latitude: locValue.latitude, longitude: locValue.longitude)
+            mapView.addAnnotation(annotation)
+            mapView.setCenter(annotation.coordinate, animated: true)
         }
         
-        if switchOnline.isOn {
+        // Salva no Coredata
+        if appDelegate.enableRecord {
+            savePosition(latitude: locValue.latitude, longitude: locValue.longitude, timestamp: manager.location!.timestamp, speed: manager.location!.speed)
+        }
+        
+        if appDelegate.enableOnline {
             sendPositions()
         }
         
@@ -137,13 +144,13 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         
     }
     
-    func getContext () -> NSManagedObjectContext {
-        let appDelegate = UIApplication.shared.delegate as! AppDelegate
-        return appDelegate.persistentContainer.viewContext
-    }
+//    func getContext () -> NSManagedObjectContext {
+//        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+//        return appDelegate.persistentContainer.viewContext
+//    }
     
-    func savePosition(latitude: Double, longitude: Double, timestamp: Date) {
-        let context = getContext()
+    func savePosition(latitude: Double, longitude: Double, timestamp: Date, speed: Double) {
+        let context = appDelegate.persistentContainer.viewContext
         
         //retrieve the entity that we just created
         let entity =  NSEntityDescription.entity(forEntityName: "Position", in: context)
@@ -154,6 +161,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         transc.setValue(latitude, forKey: "latitude")
         transc.setValue(longitude, forKey: "longitude")
         transc.setValue(timestamp, forKey: "timestamp")
+        transc.setValue(speed, forKey: "speed")
         transc.setValue(false, forKey: "sent")
         
         //save the object
@@ -168,52 +176,55 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     }
     
     func setCounters() {
-        gravados = 0
-        enviados = 0
-        var distance = CLLocationDistance()
-        //create a fetch request, telling it about the entity
-        let fetchRequest: NSFetchRequest<Position> = Position.fetchRequest()
-        //fetchRequest.predicate = NSPredicate(format: "sent == %@", firstName)
-        //distanceTracked
-        do {
-            let searchResults = try getContext().fetch(fetchRequest)
-        
-            var locActual = CLLocation()
-            var locPrevious = CLLocation()
-            
-            for trans in searchResults as [NSManagedObject] {
-                locActual = CLLocation.init(latitude: trans.value(forKey: "latitude") as! Double, longitude: trans.value(forKey: "longitude") as! Double)
-                if (gravados > 0) {
-                    distance.add(locActual.distance(from: locPrevious))
+        if (appDelegate.enableUIChanges) {
+            gravados = 0
+            enviados = 0
+            var distance = CLLocationDistance()
+            //create a fetch request, telling it about the entity
+            let fetchRequest: NSFetchRequest<Position> = Position.fetchRequest()
+            //fetchRequest.predicate = NSPredicate(format: "sent == %@", firstName)
+            //distanceTracked
+            do {
+                let searchResults = try appDelegate.persistentContainer.viewContext.fetch(fetchRequest)
+                
+                var locActual = CLLocation()
+                var locPrevious = CLLocation()
+                
+                for trans in searchResults as [NSManagedObject] {
+                    locActual = CLLocation.init(latitude: trans.value(forKey: "latitude") as! Double, longitude: trans.value(forKey: "longitude") as! Double)
+                    if (gravados > 0) {
+                        distance.add(locActual.distance(from: locPrevious))
+                    }
+                    gravados+=1
+                    if trans.value(forKey: "sent") as! Bool == true {
+                        enviados+=1
+                    }
+                    locPrevious = CLLocation.init(latitude: trans.value(forKey: "latitude") as! Double, longitude: trans.value(forKey: "longitude") as! Double)
                 }
-                gravados+=1
-                if trans.value(forKey: "sent") as! Bool == true {
-                    enviados+=1
-                }
-                locPrevious = CLLocation.init(latitude: trans.value(forKey: "latitude") as! Double, longitude: trans.value(forKey: "longitude") as! Double)
             }
+            catch {
+                print("Error with request: \(error)")
+            }
+            self.enviadosLabel.text = "\(self.gravados)/\(self.enviados)"
+            self.distanceTracked.text = "Traveled: \(NSString(format: "%.2f", (distance / 1000)))km"
         }
-        catch {
-            print("Error with request: \(error)")
-        }
-        self.enviadosLabel.text = "\(self.gravados)/\(self.enviados)"
-        self.distanceTracked.text = "Traveled: \(NSString(format: "%.2f", (distance / 1000)))km"
     }
     
     func deleteSentPositions() {
-        let context = getContext()
+        let context = appDelegate.persistentContainer.viewContext
 
         //create a fetch request, telling it about the entity
         let fetchRequest: NSFetchRequest<Position> = Position.fetchRequest()
         fetchRequest.predicate = NSPredicate(format: "sent == %@", NSNumber(booleanLiteral: true))
         
         do {
-            let searchResults = try getContext().fetch(fetchRequest)
+            let searchResults = try appDelegate.persistentContainer.viewContext.fetch(fetchRequest)
             
             print ("Number of positions to delete: \(searchResults.count)")
             
             for trans in searchResults as [NSManagedObject] {
-                context.delete(trans)
+                //context.delete(trans)
+                trans.setValue(false, forKey: "sent")
             }
             do {
                 try context.save()
@@ -223,16 +234,13 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             } catch {
                 
             }
-            
         }
         catch {
             print("Error with request: \(error)")
         }
         setCounters()
     }
-    
-    
-    
+
     func sendPositions() {
         //create a fetch request, telling it about the entity
         let fetchRequest: NSFetchRequest<Position> = Position.fetchRequest()
@@ -240,59 +248,72 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         
         do {
             //go get the results
-            let searchResults = try getContext().fetch(fetchRequest)
+            let searchResults = try appDelegate.persistentContainer.viewContext.fetch(fetchRequest)
             
             //I like to check the size of the returned results!
             print ("Number of positions to send: \(searchResults.count)")
             
-            //You need to convert to NSManagedObject to use 'for' loops
-            for trans in searchResults as [NSManagedObject] {
+            // Semaphore to avoid the for to open countless threads with no control. Let's allow 16 at a time..
+            let dispatchQueue = DispatchQueue(label: "DispatchQueue.sendPositions")
+            let semaphore = DispatchSemaphore(value: 16)
+            dispatchQueue.async {
                 
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss ZZZ"
-                dateFormatter.timeZone = NSTimeZone(abbreviation: "UTC")! as TimeZone
-                let todaysDate = dateFormatter.string(from: trans.value(forKey: "timestamp") as! Date)
-                
-                var success = false
-                
-                var request = URLRequest(url: URL(string: "http://tracker.siriusgomes.com.br/index.php")!)
-                request.httpMethod = "POST"
-                let postString = "lat=\(trans.value(forKey: "latitude") ?? "")&lng=\(trans.value(forKey: "longitude") ?? "")&date=\(todaysDate)"
-                print ("Sending \(postString)")
-                request.httpBody = postString.data(using: .utf8)
-                let task = URLSession.shared.dataTask(with: request) { data, response, error in
-                    guard let data = data, error == nil else {                                                 // check for fundamental networking error
-                        print("error=\(String(describing: error))")
-                        return
-                    }
+                //You need to convert to NSManagedObject to use 'for' loops
+                for trans in searchResults as [NSManagedObject] {
                     
-                    if let httpStatus = response as? HTTPURLResponse, httpStatus.statusCode != 200 {           // check for http errors
-                        print("statusCode should be 200, but is \(httpStatus.statusCode)")
-                        print("response = \(String(describing: response))")
-                        success = false
-                    }
-                    else {
-                        let responseString = String(data: data, encoding: .utf8)
-                        print("response = \(responseString == "1" ? "OK" : "")")
-                        success = (responseString == "1" ? true : false)
-                     }
-                    if success == true {
-                        trans.setValue(true, forKey: "sent")
-                        do {
-                            try self.getContext().save()
-                            print("Updated sent to true!")
-                        } catch let error as NSError  {
-                            print("Could not save \(error), \(error.userInfo)")
-                        } catch {
+                    _ = semaphore.wait(timeout: DispatchTime.distantFuture)
+                    
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss ZZZ"
+                    dateFormatter.timeZone = NSTimeZone(abbreviation: "UTC")! as TimeZone
+                    let todaysDate = dateFormatter.string(from: trans.value(forKey: "timestamp") as! Date)
+                    
+                    var success = false
+                    
+                    var request = URLRequest(url: URL(string: "http://tracker.siriusgomes.com.br/index.php")!)
+                    request.httpMethod = "POST"
+                    let postString = "lat=\(trans.value(forKey: "latitude") ?? "")&lng=\(trans.value(forKey: "longitude") ?? "")&date=\(todaysDate)&speed=\(trans.value(forKey: "speed") ?? "")"
+                    print ("Sending \(postString)")
+                    request.httpBody = postString.data(using: .utf8)
+                    let task = URLSession.shared.dataTask(with: request) { data, response, error in
+                        guard let data = data, error == nil else {                                                 // check for fundamental networking error
+                            print("error=\(String(describing: error))")
+                            return
                         }
+                        
+                        if let httpStatus = response as? HTTPURLResponse, httpStatus.statusCode != 200 {           // check for http errors
+                            print("statusCode should be 200, but is \(httpStatus.statusCode)")
+                            print("response = \(String(describing: response))")
+                            success = false
+                        }
+                        else {
+                            let responseString = String(data: data, encoding: .utf8)
+                            print("response = \(responseString == "1" ? "OK" : "")")
+                            success = (responseString == "1" ? true : false)
+                        }
+                        if success == true {
+                            trans.setValue(true, forKey: "sent")
+                            do {
+                                try self.appDelegate.persistentContainer.viewContext.save()
+                                print("Updated sent to true!")
+                                DispatchQueue.main.async {
+                                    self.enviados += 1
+                                    self.enviadosLabel.text = "\(self.gravados)/\(self.enviados)"
+                                }
+                                semaphore.signal()
+                            } catch let error as NSError  {
+                                print("Could not save \(error), \(error.userInfo)")
+                            } catch {
+                            }
+                        }
+                        
+                        
                     }
-                    
+                    task.resume()
                     
                 }
-                task.resume()
-                
             }
-            self.setCounters()
+            
         } catch {
             print("Error with request: \(error)")
         }
@@ -302,7 +323,5 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-    
-    
 }
 
