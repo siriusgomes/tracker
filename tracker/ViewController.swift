@@ -69,7 +69,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         
         setCounters()
         
-        mapView.mapType = MKMapType.satelliteFlyover
+        mapView.mapType = MKMapType.hybridFlyover
         
         // Ask for Authorisation from the User.
         self.locationManager.requestAlwaysAuthorization()
@@ -223,8 +223,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             print ("Number of positions to delete: \(searchResults.count)")
             
             for trans in searchResults as [NSManagedObject] {
-                //context.delete(trans)
-                trans.setValue(false, forKey: "sent")
+                context.delete(trans)
             }
             do {
                 try context.save()
@@ -296,9 +295,16 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                             do {
                                 try self.appDelegate.persistentContainer.viewContext.save()
                                 print("Updated sent to true!")
-                                DispatchQueue.main.async {
-                                    self.enviados += 1
-                                    self.enviadosLabel.text = "\(self.gravados)/\(self.enviados)"
+                                if self.appDelegate.enableOnline {
+                                    DispatchQueue.main.async {
+                                        self.setCounters()
+                                    }
+                                }
+                                else if (self.appDelegate.enableUIChanges) {
+                                    DispatchQueue.main.async {
+                                        self.enviados += 1
+                                        self.enviadosLabel.text = "\(self.gravados)/\(self.enviados)"
+                                    }
                                 }
                                 semaphore.signal()
                             } catch let error as NSError  {
