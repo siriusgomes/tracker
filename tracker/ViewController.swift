@@ -23,9 +23,11 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     @IBOutlet weak var enviadosLabel: UILabel!
     @IBOutlet weak var latLabel: UILabel!
     
+    
     let locationManager = CLLocationManager()
     var enviados = 0
     var gravados = 0
+    var semaphore = DispatchSemaphore(value: 4)
     
     let appDelegate = UIApplication.shared.delegate as! AppDelegate
 
@@ -134,14 +136,13 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         // Salva no Coredata
         if appDelegate.enableRecord {
             savePosition(latitude: locValue.latitude, longitude: locValue.longitude, timestamp: manager.location!.timestamp, speed: manager.location!.speed)
+            setCounters()
         }
-        
         if appDelegate.enableOnline {
+            semaphore.signal()
             sendPositions()
         }
-        
-        setCounters()
-        
+
     }
     
 //    func getContext () -> NSManagedObjectContext {
@@ -170,8 +171,6 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             print("saved!")
         } catch let error as NSError  {
             print("Could not save \(error), \(error.userInfo)")
-        } catch {
-            
         }
     }
     
@@ -224,6 +223,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             
             for trans in searchResults as [NSManagedObject] {
                 context.delete(trans)
+                //trans.setValue(false, forKey: "sent")
             }
             do {
                 try context.save()
@@ -254,13 +254,12 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             
             // Semaphore to avoid the for to open countless threads with no control. Let's allow 16 at a time..
             let dispatchQueue = DispatchQueue(label: "DispatchQueue.sendPositions")
-            let semaphore = DispatchSemaphore(value: 16)
+            
             dispatchQueue.async {
                 
                 //You need to convert to NSManagedObject to use 'for' loops
                 for trans in searchResults as [NSManagedObject] {
-                    
-                    _ = semaphore.wait(timeout: DispatchTime.distantFuture)
+                    _ = self.semaphore.wait(timeout: DispatchTime.distantFuture)
                     
                     let dateFormatter = DateFormatter()
                     dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss ZZZ"
@@ -295,28 +294,21 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                             do {
                                 try self.appDelegate.persistentContainer.viewContext.save()
                                 print("Updated sent to true!")
-                                if self.appDelegate.enableOnline {
+                                self.enviados += 1
+                                
+                                if (self.appDelegate.enableUIChanges) {
                                     DispatchQueue.main.async {
-                                        self.setCounters()
-                                    }
-                                }
-                                else if (self.appDelegate.enableUIChanges) {
-                                    DispatchQueue.main.async {
-                                        self.enviados += 1
                                         self.enviadosLabel.text = "\(self.gravados)/\(self.enviados)"
                                     }
                                 }
-                                semaphore.signal()
+                                self.semaphore.signal()
                             } catch let error as NSError  {
                                 print("Could not save \(error), \(error.userInfo)")
                             } catch {
                             }
                         }
-                        
-                        
                     }
                     task.resume()
-                    
                 }
             }
             
