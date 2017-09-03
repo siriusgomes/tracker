@@ -10,7 +10,6 @@ import UIKit
 import MapKit
 import CoreData
 
-
 class ViewController: UIViewController, CLLocationManagerDelegate {
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var switchOnline: UISwitch!
@@ -120,7 +119,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         print("Location = \(locValue.latitude),\(locValue.longitude) - Altitude: \(manager.location!.altitude)m - Speed: \(manager.location!.speed)m/s - Timestamp: \(manager.location!.timestamp)")
        
         latLabel.text = "Latitude/Longitude: \(NSString(format: "%.6f",locValue.latitude)),\(NSString(format: "%.6f",locValue.longitude))"
-        altitudeLabel.text = "Altitude: \(NSString(format: "%.2f", manager.location!.altitude))m"
+        altitudeLabel.text = "Altitude: \(NSString(format: "%.2f", manager.location!.altitude))m  \(NSString(format: "%.0f", manager.location!.altitude * 3.2808))ft  Accuracy: \(NSString(format: "%.0f", manager.location!.horizontalAccuracy))m"
         speedLabel.text = "Speed: \(NSString(format: "%.2f", manager.location!.speed * 3.6))km/h"
         
         // Coloca o pin no mapa..
@@ -135,12 +134,56 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         
         // Salva no Coredata
         if appDelegate.enableRecord {
-            savePosition(latitude: locValue.latitude, longitude: locValue.longitude, timestamp: manager.location!.timestamp, speed: manager.location!.speed)
+            savePosition(latitude: locValue.latitude, longitude: locValue.longitude, timestamp: manager.location!.timestamp, speed: manager.location!.speed, sent: appDelegate.enableOnline, altitude: manager.location!.altitude)
             setCounters()
         }
         if appDelegate.enableOnline {
-            semaphore.signal()
-            sendPositions()
+            
+            var success = false
+            
+            
+            let hash = self.MD5(string: "")
+            
+            var request = URLRequest(url: URL(string: "https://tracker.siriusgomes.com.br/index.php")!)
+            request.httpMethod = "POST"
+            let postString = "lat=\(locValue.latitude)&lng=\(locValue.longitude)&date=\(manager.location!.timestamp)&speed=\(manager.location!.speed)&altitude=\(manager.location!.altitude)&hash=\(hash)"
+            
+            print ("Sending \(postString)")
+            request.httpBody = postString.data(using: .utf8)
+            let task = URLSession.shared.dataTask(with: request) { data, response, error in
+                guard let data = data, error == nil else {                                                 // check for fundamental networking error
+                    print("error=\(String(describing: error))")
+                    return
+                }
+                
+                if let httpStatus = response as? HTTPURLResponse, httpStatus.statusCode != 200 {           // check for http errors
+                    print("statusCode should be 200, but is \(httpStatus.statusCode)")
+                    print("response = \(String(describing: response))")
+                    success = false
+                }
+                else {
+                    let responseString = String(data: data, encoding: .utf8)
+                    print("response = \(responseString == "1" ? "OK" : "")")
+                    success = (responseString == "1" ? true : false)
+                }
+                if success == true {
+                    do {
+                        try self.appDelegate.persistentContainer.viewContext.save()
+                        print("Updated sent to true!")
+                        self.enviados += 1
+                        
+                        if (self.appDelegate.enableUIChanges) {
+                            DispatchQueue.main.async {
+                                self.enviadosLabel.text = "\(self.gravados)/\(self.enviados)"
+                            }
+                        }
+                    } catch let error as NSError  {
+                        print("Could not save \(error), \(error.userInfo)")
+                    } catch {
+                    }
+                }
+            }
+            task.resume()
         }
 
     }
@@ -150,7 +193,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
 //        return appDelegate.persistentContainer.viewContext
 //    }
     
-    func savePosition(latitude: Double, longitude: Double, timestamp: Date, speed: Double) {
+    func savePosition(latitude: Double, longitude: Double, timestamp: Date, speed: Double, sent: Bool, altitude: Double) {
         let context = appDelegate.persistentContainer.viewContext
         
         //retrieve the entity that we just created
@@ -162,8 +205,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         transc.setValue(latitude, forKey: "latitude")
         transc.setValue(longitude, forKey: "longitude")
         transc.setValue(timestamp, forKey: "timestamp")
+        transc.setValue(altitude, forKey: "altitude")
         transc.setValue(speed, forKey: "speed")
-        transc.setValue(false, forKey: "sent")
+        transc.setValue(sent, forKey: "sent")
         
         //save the object
         do {
@@ -267,10 +311,11 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                     let todaysDate = dateFormatter.string(from: trans.value(forKey: "timestamp") as! Date)
                     
                     var success = false
+                    let hash = self.MD5(string: "")
                     
-                    var request = URLRequest(url: URL(string: "http://tracker.siriusgomes.com.br/index.php")!)
+                    var request = URLRequest(url: URL(string: "https://tracker.siriusgomes.com.br/index.php")!)
                     request.httpMethod = "POST"
-                    let postString = "lat=\(trans.value(forKey: "latitude") ?? "")&lng=\(trans.value(forKey: "longitude") ?? "")&date=\(todaysDate)&speed=\(trans.value(forKey: "speed") ?? "")"
+                    let postString = "lat=\(trans.value(forKey: "latitude") ?? "")&lng=\(trans.value(forKey: "longitude") ?? "")&date=\(todaysDate)&speed=\(trans.value(forKey: "speed") ?? "")&altitude=\(trans.value(forKey: "altitude") ?? "")&hash=\(hash)"
                     print ("Sending \(postString)")
                     request.httpBody = postString.data(using: .utf8)
                     let task = URLSession.shared.dataTask(with: request) { data, response, error in
@@ -315,6 +360,21 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         } catch {
             print("Error with request: \(error)")
         }
+    }
+    
+    
+    func MD5(string: String) -> String {
+        print(string)
+        let messageData = string.data(using:.utf8)!
+        var digestData = Data(count: Int(CC_MD5_DIGEST_LENGTH))
+        
+        _ = digestData.withUnsafeMutableBytes {digestBytes in
+            messageData.withUnsafeBytes {messageBytes in
+                CC_MD5(messageBytes, CC_LONG(messageData.count), digestBytes)
+            }
+        }
+        
+        return digestData.map { String(format: "%02hhx", $0) }.joined()
     }
     
     override func didReceiveMemoryWarning() {

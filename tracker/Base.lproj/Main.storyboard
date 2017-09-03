@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="12121" systemVersion="16F73" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
     <device id="ipad9_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
@@ -31,14 +31,8 @@
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Altitude: 99999.99m" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="kZz-5b-ydT">
-                                <rect key="frame" x="15" y="45" width="135" height="20"/>
-                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
-                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
-                                <nil key="highlightedColor"/>
-                            </label>
-                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Speed: 9999.99km/h" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="IsW-7g-mPS">
-                                <rect key="frame" x="171" y="45" width="137" height="17"/>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Altitude: 99999.99m - (99999ft) - Accuracy: 99999.9m" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="kZz-5b-ydT">
+                                <rect key="frame" x="15" y="45" width="382" height="20"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
@@ -122,6 +116,12 @@
                                     <action selector="onChangeDesiredAcuracy:" destination="BYZ-38-t0r" eventType="valueChanged" id="Paj-eI-AXO"/>
                                 </connections>
                             </segmentedControl>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" misplaced="YES" text="Speed: 9999.99km/h" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="IsW-7g-mPS">
+                                <rect key="frame" x="172" y="70" width="137" height="20"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
@@ -133,16 +133,15 @@
                             <constraint firstItem="8pf-nE-Jdi" firstAttribute="top" secondItem="u1o-uB-Ur5" secondAttribute="bottom" constant="1" id="7vx-LV-Q19"/>
                             <constraint firstItem="1r7-wc-Djg" firstAttribute="top" secondItem="u1o-uB-Ur5" secondAttribute="bottom" constant="55" id="8N6-re-sii"/>
                             <constraint firstItem="GqB-ZA-Sic" firstAttribute="centerX" secondItem="1r7-wc-Djg" secondAttribute="centerX" id="Dfo-EY-fgg"/>
-                            <constraint firstItem="IsW-7g-mPS" firstAttribute="top" secondItem="BtN-Hy-x24" secondAttribute="bottom" constant="5" id="FeQ-gY-1eQ"/>
                             <constraint firstItem="u1o-uB-Ur5" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="HGl-e3-lMb"/>
                             <constraint firstItem="kZz-5b-ydT" firstAttribute="top" secondItem="BtN-Hy-x24" secondAttribute="bottom" constant="5" id="LWl-30-wmS"/>
+                            <constraint firstItem="IsW-7g-mPS" firstAttribute="top" secondItem="kZz-5b-ydT" secondAttribute="bottom" constant="5" id="QRD-m7-81e"/>
                             <constraint firstItem="BtN-Hy-x24" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="-5" id="Tit-2g-evg"/>
                             <constraint firstItem="agg-vI-yuY" firstAttribute="centerY" secondItem="8pf-nE-Jdi" secondAttribute="centerY" id="TsE-Od-Oqo"/>
                             <constraint firstAttribute="leadingMargin" secondItem="zwa-6B-8lc" secondAttribute="leading" id="VV5-ls-cHy"/>
                             <constraint firstItem="dR3-UL-CfH" firstAttribute="centerY" secondItem="u1o-uB-Ur5" secondAttribute="centerY" id="YLu-zR-5cf"/>
                             <constraint firstItem="ypy-dN-w40" firstAttribute="height" secondItem="8bC-Xf-vdC" secondAttribute="height" id="ddE-Mn-w9U"/>
                             <constraint firstItem="kZz-5b-ydT" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="-5" id="dko-Nm-L98"/>
-                            <constraint firstItem="IsW-7g-mPS" firstAttribute="leading" secondItem="kZz-5b-ydT" secondAttribute="trailing" constant="21" id="ffh-Nf-SZR"/>
                             <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="1r7-wc-Djg" secondAttribute="bottom" constant="44" id="gZD-Y5-Ciu"/>
                             <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="GqB-ZA-Sic" secondAttribute="bottom" constant="8" id="hLF-1m-I3d"/>
                             <constraint firstItem="8pf-nE-Jdi" firstAttribute="centerX" secondItem="u1o-uB-Ur5" secondAttribute="centerX" id="hjK-20-uDZ"/>
@@ -150,6 +149,7 @@
                             <constraint firstItem="EeP-A9-d5P" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="-5" id="kGv-ot-aH0"/>
                             <constraint firstItem="Afv-zX-ToI" firstAttribute="centerY" secondItem="u1o-uB-Ur5" secondAttribute="centerY" id="n1s-Er-2F0"/>
                             <constraint firstAttribute="leadingMargin" secondItem="Afv-zX-ToI" secondAttribute="leading" id="pQp-WG-WeX"/>
+                            <constraint firstItem="IsW-7g-mPS" firstAttribute="leading" secondItem="EeP-A9-d5P" secondAttribute="trailing" constant="8" id="u8z-QU-PRy"/>
                             <constraint firstItem="zwa-6B-8lc" firstAttribute="centerY" secondItem="8pf-nE-Jdi" secondAttribute="centerY" id="uD1-WJ-hhn"/>
                             <constraint firstItem="ypy-dN-w40" firstAttribute="width" secondItem="8bC-Xf-vdC" secondAttribute="width" id="yeD-yU-FeT"/>
                         </constraints>
