@@ -14,6 +14,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     @IBOutlet weak var mapView: MKMapView!
     @IBOutlet weak var switchOnline: UISwitch!
     @IBOutlet weak var switchRecord: UISwitch!
+    @IBOutlet weak var switchGPS: UISwitch!
     @IBOutlet weak var distanceTracked: UILabel!
     @IBOutlet weak var buttonDeleteSent: UIButton!
     @IBOutlet weak var altitudeLabel: UILabel!
@@ -114,6 +115,16 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         }
     }
     
+    @IBAction func switchGPS(_ sender: UISwitch) {
+        if sender.isOn {
+            print("switch gps on")
+            locationManager.startUpdatingLocation()
+        } else {
+            locationManager.stopUpdatingLocation()
+            print("switch record off")
+        }
+    }
+    
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         let locValue:CLLocationCoordinate2D = manager.location!.coordinate
         print("Location = \(locValue.latitude),\(locValue.longitude) - Altitude: \(manager.location!.altitude)m - Speed: \(manager.location!.speed)m/s - Timestamp: \(manager.location!.timestamp)")
@@ -142,7 +153,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             var success = false
             
             
-            let hash = self.MD5(string: "")
+            let hash = self.MD5(string: "TraCk\(manager.location!.altitude)ErSiR\(manager.location!.speed)iuS\(locValue.latitude)Ey\(locValue.latitude)Ta\(locValue.longitude)")
             
             var request = URLRequest(url: URL(string: "https://tracker.siriusgomes.com.br/index.php")!)
             request.httpMethod = "POST"
@@ -236,7 +247,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                 for trans in searchResults as [NSManagedObject] {
                     locActual = CLLocation.init(latitude: trans.value(forKey: "latitude") as! Double, longitude: trans.value(forKey: "longitude") as! Double)
                     if (gravados > 0) {
-                        distance.add(locActual.distance(from: locPrevious))
+                        distance += (locActual.distance(from: locPrevious))
                     }
                     gravados+=1
                     if trans.value(forKey: "sent") as! Bool == true {
@@ -311,7 +322,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                     let todaysDate = dateFormatter.string(from: trans.value(forKey: "timestamp") as! Date)
                     
                     var success = false
-                    let hash = self.MD5(string: "")
+                    let hash = self.MD5(string: "TraCk\(trans.value(forKey: "altitude") ?? "")ErSiR\(trans.value(forKey: "speed") ?? "")iuS\(trans.value(forKey: "latitude") ?? "")Ey\(trans.value(forKey: "latitude") ?? "")Ta\(trans.value(forKey: "longitude") ?? "")")
                     
                     var request = URLRequest(url: URL(string: "https://tracker.siriusgomes.com.br/index.php")!)
                     request.httpMethod = "POST"

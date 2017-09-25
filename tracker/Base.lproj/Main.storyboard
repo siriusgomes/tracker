@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="12121" systemVersion="16G29" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="13196" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
     <device id="ipad9_7" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="12089"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="13173"/>
         <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -122,6 +122,18 @@
                                 <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO" id="5xL-1D-NIq">
+                                <rect key="frame" x="21" y="840" width="49" height="31"/>
+                                <connections>
+                                    <action selector="switchGPS:" destination="BYZ-38-t0r" eventType="valueChanged" id="Wb0-vh-ZBb"/>
+                                </connections>
+                            </switch>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" ambiguous="YES" misplaced="YES" text="GPS:" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Uns-0V-Qc3">
+                                <rect key="frame" x="20" y="819" width="60" height="21"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <color key="textColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <color key="tintColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
@@ -134,12 +146,15 @@
                             <constraint firstItem="1r7-wc-Djg" firstAttribute="top" secondItem="u1o-uB-Ur5" secondAttribute="bottom" constant="55" id="8N6-re-sii"/>
                             <constraint firstItem="GqB-ZA-Sic" firstAttribute="centerX" secondItem="1r7-wc-Djg" secondAttribute="centerX" id="Dfo-EY-fgg"/>
                             <constraint firstItem="u1o-uB-Ur5" firstAttribute="centerX" secondItem="8bC-Xf-vdC" secondAttribute="centerX" id="HGl-e3-lMb"/>
+                            <constraint firstItem="5xL-1D-NIq" firstAttribute="centerX" secondItem="zwa-6B-8lc" secondAttribute="centerX" id="Hdb-cs-YY5"/>
                             <constraint firstItem="kZz-5b-ydT" firstAttribute="top" secondItem="BtN-Hy-x24" secondAttribute="bottom" constant="5" id="LWl-30-wmS"/>
                             <constraint firstItem="IsW-7g-mPS" firstAttribute="top" secondItem="kZz-5b-ydT" secondAttribute="bottom" constant="5" id="QRD-m7-81e"/>
                             <constraint firstItem="BtN-Hy-x24" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="-5" id="Tit-2g-evg"/>
                             <constraint firstItem="agg-vI-yuY" firstAttribute="centerY" secondItem="8pf-nE-Jdi" secondAttribute="centerY" id="TsE-Od-Oqo"/>
                             <constraint firstAttribute="leadingMargin" secondItem="zwa-6B-8lc" secondAttribute="leading" id="VV5-ls-cHy"/>
                             <constraint firstItem="dR3-UL-CfH" firstAttribute="centerY" secondItem="u1o-uB-Ur5" secondAttribute="centerY" id="YLu-zR-5cf"/>
+                            <constraint firstItem="Afv-zX-ToI" firstAttribute="top" secondItem="Uns-0V-Qc3" secondAttribute="bottom" constant="32" id="YiM-dm-W9I"/>
+                            <constraint firstItem="zwa-6B-8lc" firstAttribute="top" secondItem="5xL-1D-NIq" secondAttribute="bottom" constant="22" id="bK6-mz-FEg"/>
                             <constraint firstItem="ypy-dN-w40" firstAttribute="height" secondItem="8bC-Xf-vdC" secondAttribute="height" id="ddE-Mn-w9U"/>
                             <constraint firstItem="kZz-5b-ydT" firstAttribute="leading" secondItem="8bC-Xf-vdC" secondAttribute="leadingMargin" constant="-5" id="dko-Nm-L98"/>
                             <constraint firstItem="wfy-db-euE" firstAttribute="top" secondItem="1r7-wc-Djg" secondAttribute="bottom" constant="44" id="gZD-Y5-Ciu"/>
@@ -162,6 +177,7 @@
                         <outlet property="latLabel" destination="BtN-Hy-x24" id="FoM-Ef-eV6"/>
                         <outlet property="mapView" destination="ypy-dN-w40" id="wvY-7x-HUI"/>
                         <outlet property="speedLabel" destination="IsW-7g-mPS" id="kdC-hU-rmY"/>
+                        <outlet property="switchGPS" destination="5xL-1D-NIq" id="dzW-VE-daV"/>
                         <outlet property="switchOnline" destination="agg-vI-yuY" id="Jko-gS-yzT"/>
                         <outlet property="switchRecord" destination="zwa-6B-8lc" id="nrZ-Ub-hzG"/>
                     </connections>
